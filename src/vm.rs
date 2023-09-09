@@ -1,7 +1,7 @@
 use crate::{
     chunk::Chunk,
     opcode::OpCode,
-    value::{Value},
+    value::Value,
 };
 
 #[derive(Clone)]
@@ -9,7 +9,6 @@ pub struct Vm {
     // instruction pointer
     pub ip: usize,
     stack: Vec<Value>,
-    tos: Value,
 }
 
 #[derive(Clone, Debug)]
@@ -24,31 +23,15 @@ impl Vm {
         Self {
             ip: 0,
             stack: vec![],
-            tos: 0.0,
         }
     }
 
-    pub fn reset_stack(&mut self) {
-        self.tos = self.stack[0];
-    }
     pub fn free(&mut self) {}
 
     pub fn interpret(&mut self, chunk: &Chunk) -> InterpretResult {
         self.ip = 0;
         return self.run(chunk);
     }
-
-    pub fn push(&mut self, value: Value) {
-        self.tos = value;
-        self.tos += 1.0;
-    }
-
-    pub fn pop(&mut self) -> Value {
-        self.tos -= 1.0;
-        return self.tos;
-    }
-
-    pub fn debug_trace(&self) {}
 
     fn read_byte(&mut self, chunk: &Chunk) -> OpCode {
         let opcode: OpCode = chunk.read(self.ip).into();
@@ -71,18 +54,22 @@ impl Vm {
             let instruction = self.read_byte(chunk);
 
             match instruction {
-                OpCode::OpReturn => {
+                OpCode::Return => {
                     println!("{}", self.stack.pop().unwrap());
                     return InterpretResult::InterpretOk;
                 }
-                OpCode::OpConstant => {
+                OpCode::Constant => {
                     let constant = self.read_constant(chunk);
                     self.stack.push(constant);
                 }
-                OpCode::OPNegate => {
-                    let value = self.pop();
-                    self.push(-value);
+                OpCode::Negate => {
+                    let value = self.stack.pop().unwrap();
+                    self.stack.push(-value);
                 }
+                OpCode::Add => self.binary_op(|a,b| a + b),
+                OpCode::Subtract => self.binary_op(|a, b| a - b),
+                OpCode::Multiply => self.binary_op(|a, b|  a * b),
+                OpCode::Divide => self.binary_op(|a, b| a / b)
             }
         }
     }
@@ -91,5 +78,12 @@ impl Vm {
         let index = chunk.read(self.ip) as usize;
         self.ip += 1;
         chunk.get_constant(index)
+    }
+
+
+    fn binary_op(&mut self, op: fn(a: Value , b: Value) -> Value ){
+        let a = self.stack.pop().unwrap();
+        let b = self.stack.pop().unwrap();
+        self.stack.push(op(a, b));
     }
 }

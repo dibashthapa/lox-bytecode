@@ -8,13 +8,30 @@ mod opcode;
 mod vm;
 fn main() {
     let mut vm = Vm::new();
+
     let mut chunk = Chunk::new();
-    let constant = chunk.add_constant(1.2);
-    chunk.write_opcode(OpCode::OpConstant, 123);
-    chunk.write(constant as u8, 123);
-    chunk.write_opcode(OpCode::OpReturn, 123);
-    chunk.disassemble("test chunk");
+    
+    let constant = chunk.add_constant(1.0);
+    chunk.write_opcode(OpCode::Constant, 123);
+    chunk.write(constant, 123);
+
+
+    let constant = chunk.add_constant(2.0);
+    chunk.write_opcode(OpCode::Constant, 123);
+    chunk.write(constant, 123);
+
+    chunk.write_opcode(OpCode::Multiply, 123);
+
+    let constant= chunk.add_constant(3.0);
+    chunk.write_opcode(OpCode::Constant, 123);
+    chunk.write(constant, 123);
+
+    chunk.write_opcode(OpCode::Add, 123);
+
+    chunk.write_opcode(OpCode::Return, 123);
+
+
     vm.interpret(&chunk);
-    vm.free();
     chunk.free();
+    vm.free();
 }

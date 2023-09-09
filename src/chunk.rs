@@ -20,7 +20,7 @@ impl Chunk {
     }
 
     pub fn write(&mut self, byte: u8, line: usize) {
-        self.code.push(byte.into());
+        self.code.push(byte);
         self.lines.push(line);
     }
 
@@ -29,44 +29,39 @@ impl Chunk {
         self.lines.push(line);
     }
 
-    pub fn add_constant(&mut self, value: Value) -> usize {
-        self.constants.write(value);
-        return self.constants.values.len() - 1;
-    }
-
-    pub fn get_constant(&self, index:usize) -> Value {
-        self.constants.values[index]
-    }
-
     pub fn read(&self, ip:usize) -> u8 {
         self.code[ip]
     }  
 
     pub fn free(&mut self) {
         self.code = vec![];
-        self.lines = vec![];
         self.constants.free();
     }
+    pub fn add_constant(&mut self, value: Value) -> u8 {
+        self.constants.write(value) as u8
+    }
 
-    pub fn interpret(&mut self) {}
+    pub fn get_constant(&self, index:usize) -> Value {
+        self.constants.values[index]
+    }
 
     fn constant_instruction(&self, name: &str, offset: usize) -> usize {
         let constant = self.code[offset + 1];
-        print!("{:<16} {:>4} ", name, constant);
+        print!("{name:-16} {constant:4} ");
         print_value(self.constants.values[constant as usize]);
         println!();
         offset + 2
     }
 
-    pub fn disassemble(&mut self, name: &str) {
-        println!("== {} ==", name);
+    // pub fn disassemble(&mut self, name: &str) {
+    //     println!("== {} ==", name);
 
-        let mut offset = 0;
+    //     let mut offset = 0;
 
-        while offset < self.code.len() {
-            offset = self.disassemble_instruction(offset);
-        }
-    }
+    //     while offset < self.code.len() {
+    //         offset = self.disassemble_instruction(offset);
+    //     }
+    // }
 
     pub fn disassemble_instruction(&self, offset: usize) -> usize {
         print!("{:04} ", offset);
@@ -78,14 +73,19 @@ impl Chunk {
         let instruction = self.code[offset].into();
 
         match instruction {
-            OpCode::OpReturn => simple_instruction("OP_RETURN", offset),
-            OpCode::OpConstant => self.constant_instruction("OP_CONSTANT", offset),
-            OpCode::OPNegate => simple_instruction("OP_NEGATE", offset)
+            OpCode::Return => simple_instruction("OP_RETURN", offset),
+            OpCode::Constant => self.constant_instruction("OP_CONSTANT", offset),
+            OpCode::Negate => simple_instruction("OP_NEGATE", offset),
+            OpCode::Add => simple_instruction("OP_ADD", offset),
+            OpCode::Subtract=> simple_instruction("OP_SUBTRACT", offset),
+            OpCode::Multiply=> simple_instruction("OP_MULTIPLY", offset),
+            OpCode::Divide=> simple_instruction("OP_DIVIDE", offset),
         }
     }
+
 }
 
 fn simple_instruction(name: &str, offset: usize) -> usize {
-    println!("{}", name);
-    return offset + 1;
+    println!("{name}");
+    offset + 1
 }
