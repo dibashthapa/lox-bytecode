@@ -1,7 +1,7 @@
 use crate::{
     chunk::Chunk,
     opcode::OpCode,
-    value::{print_value, Value},
+    value::{Value},
 };
 
 #[derive(Clone)]
@@ -48,17 +48,7 @@ impl Vm {
         return self.tos;
     }
 
-    pub fn debug_trace(&self) {
-        print!("          ");
-
-        for slot in self.stack.iter() {
-            print!("[ ");
-            print_value(*slot);
-            print!(" ]")
-        }
-
-        println!();
-    }
+    pub fn debug_trace(&self) {}
 
     fn read_byte(&mut self, chunk: &Chunk) -> OpCode {
         let opcode: OpCode = chunk.read(self.ip).into();
@@ -68,18 +58,26 @@ impl Vm {
 
     pub fn run(&mut self, chunk: &Chunk) -> InterpretResult {
         loop {
-
             #[cfg(feature = "debug_trace_execution")]
-            chunk.disassemble_instruction(self.ip);
+            {
+                print!("          ");
+                for slot in self.stack.iter() {
+                    print!("[  {slot}  ]");
+                }
+                println!();
+                chunk.disassemble_instruction(self.ip);
+            }
+
             let instruction = self.read_byte(chunk);
 
             match instruction {
                 OpCode::OpReturn => {
+                    println!("{}", self.stack.pop().unwrap());
                     return InterpretResult::InterpretOk;
                 }
                 OpCode::OpConstant => {
                     let constant = self.read_constant(chunk);
-                    println!("{constant}");
+                    self.stack.push(constant);
                 }
                 OpCode::OPNegate => {
                     let value = self.pop();
