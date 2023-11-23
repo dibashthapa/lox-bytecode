@@ -1,7 +1,7 @@
 use crate::{
     chunk::Chunk,
     opcode::OpCode,
-    value::Value,
+    value::Value, compiler::compile,
 };
 
 #[derive(Clone)]
@@ -14,8 +14,8 @@ pub struct Vm {
 #[derive(Clone, Debug)]
 pub enum InterpretResult {
     InterpretOk,
-    // InterpretCompileError,
-    // InterpretRuntimeError,
+    InterpretCompileError,
+    InterpretRuntimeError,
 }
 
 impl Vm {
@@ -26,11 +26,9 @@ impl Vm {
         }
     }
 
-    pub fn free(&mut self) {}
-
-    pub fn interpret(&mut self, chunk: &Chunk) -> InterpretResult {
-        self.ip = 0;
-        return self.run(chunk);
+    pub fn interpret(&mut self, source: &String) -> InterpretResult {
+        compile(source);
+        InterpretResult::InterpretOk
     }
 
     fn read_byte(&mut self, chunk: &Chunk) -> OpCode {
